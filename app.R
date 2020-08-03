@@ -31,7 +31,7 @@ source(paste0(rootDir, '/spectraAppConfig.R'))
 spectraServer <- 'http://esoil.io/APIDev'
 
 
-fls <- drop_dir(dropBoxPath)  %>% data.frame()
+#fls <- drop_dir(dropBoxPath)  %>% data.frame()
 spectraFiles <- fls$name
 print("## Hi")
 print(spectraFiles)
