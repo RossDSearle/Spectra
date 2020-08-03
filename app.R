@@ -10,6 +10,7 @@ library(xts)
 library(shinybusy)
 library(shinyjs)
 library(rhandsontable)
+library(rdrop2)
 
 
 
@@ -17,18 +18,23 @@ defWidth = '380px'
 loaderTime = 1
 
 
+
 machineName <- as.character(Sys.info()['nodename'])
 if(machineName=='soils-discovery'){
   rootDir <- '/srv/shiny-server/Spectra'
-  
-  
 }else{
   rootDir <- 'C:/Users/sea084/Dropbox/RossRCode/Git/Shiny/Spectra'
-  
 }
+
+source(paste0(rootDir, '/spectraAppConfig.R'))
 
 spectraServer <- 'http://esoil.io/APIDev'
 
+
+fls <- drop_dir(dropBoxPath)  %>% data.frame()
+spectraFiles <- fls$name
+print("## Hi")
+print(spectraFiles)
 
 
 shiny::shinyApp(
@@ -112,12 +118,19 @@ shiny::shinyApp(
           icon = f7Icon("cloud_upload", old = TRUE),
           active = TRUE,
           f7Float( f7Shadow(
-            intensity = 10,
+            intensity = 24,
             hover = TRUE,
             tags$div( style=paste0("width: ", defWidth),
                       f7Card(
-                        title = "Location",
+                        title = NULL,
+                        footer = NULL,
+                        outline = FALSE,
+                        height = NULL,
+                        #title = "Location",
                         id = 'crdMap',
+                        #f7Select(inputId = 'SMDepth', label = "Select Soil Moisture Depth (cm)", spectraFiles),
+                        f7Select(inputId = 'selectSpectra', label = '',choices= spectraFiles, selected = NULL),
+                        
                         leafletOutput("locationMap", height = 400 ),
                         
                         fluidRow(column(width = 2,
@@ -127,7 +140,8 @@ shiny::shinyApp(
                         
                       )
             )
-          ), side = "left" ),
+          ), 
+          side = "left" ),
           
           
           f7Float(  f7Shadow(
@@ -284,6 +298,7 @@ shiny::shinyApp(
     
     output$long <- renderPrint({
       input$long
+      
     })
     
     output$geolocation <- renderPrint({
