@@ -31,10 +31,10 @@ source(paste0(rootDir, '/spectraAppConfig.R'))
 spectraServer <- 'http://esoil.io/APIDev'
 
 
-#fls <- drop_dir(dropBoxPath)  %>% data.frame()
-spectraFiles <- fls$name
-print("## Hi")
-print(spectraFiles)
+
+token <- readRDS("droptoken.rds")
+print(drop_acc(dtoken = token))
+fls <- drop_dir(dropBoxPath, dtoken = token)  %>% data.frame()
 
 
 shiny::shinyApp(
@@ -129,7 +129,7 @@ shiny::shinyApp(
                         #title = "Location",
                         id = 'crdMap',
                         #f7Select(inputId = 'SMDepth', label = "Select Soil Moisture Depth (cm)", spectraFiles),
-                        f7Select(inputId = 'selectSpectra', label = '',choices= spectraFiles, selected = NULL),
+                        f7Select(inputId = 'selectSpectra', label = '',choices= spectraFiles),
                         
                         leafletOutput("locationMap", height = 400 ),
                         
