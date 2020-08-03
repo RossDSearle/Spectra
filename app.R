@@ -295,7 +295,9 @@ shiny::shinyApp(
         clearMarkers() %>%
         addTiles(group = "Map") %>%
         addProviderTiles("Esri.WorldImagery", options = providerTileOptions(noWrap = TRUE), group = "Satelite Image") %>%
-        setView(lng = input$long, lat = input$lat, zoom = 14) %>%
+
+        setView(lng = input$long, lat = input$lat, zoom = 18) %>%
+
         
         addControlGPS() %>%
         
