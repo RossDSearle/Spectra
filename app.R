@@ -11,6 +11,7 @@ library(shinybusy)
 library(shinyjs)
 library(rhandsontable)
 library(rdrop2)
+library(RCurl)
 
 
 
@@ -35,17 +36,16 @@ spectraServer <- 'http://esoil.io/APIDev'
 token <- readRDS("droptoken.rds")
 print(drop_acc(dtoken = token))
 fls <- drop_dir(dropBoxPath, dtoken = token)  %>% data.frame()
+spectraFiles <- fls$name
 
+depthVals <- seq(0, 200, 5)
 
 shiny::shinyApp(
   ui = f7Page(
-    title = "miSensors",
+    title = "SpectraCloud",
     init = f7Init(skin = "auto", theme = "light", filled = T, color = 'lightblue'),
-    tags$head(tags$link( rel="icon", type="image/png", href="wheat.png", sizes="32x32" ),
+    tags$head(tags$link( rel="icon", type="image/png", href="icons8-area-chart-64.png", sizes="32x32" ),
               tags$link( rel="apple-touch-icon", href="apple-touch-icon.png" )
-              #tags$title("BCG AgDataShop"),
-              #tags$style(type="text/css", "label.control-label, .selectize-control.single{ display: table-cell; text-align: center; vertical-align: middle; } .form-group { display: table-row;}")
-              
               ),
     
     
@@ -100,7 +100,7 @@ shiny::shinyApp(
 ##################################  NAVIGATION BAR   ##################################      
       navbar = f7Navbar(
        # title = shiny::tags$div(style="background-image: url('Logos/HdrBkGrdImage.PNG');", tags$img(src = "Logos/csiro.png", width = "40px", height = "40px"), "Boowora Agricultutral Research Station "),
-        title = tags$div( tags$div(style="vertical-align:middle!important; text-align:left!important; display:inline-block;", "miSensors"), HTML('&nbsp&nbsp&nbsp'), tags$div(style="float: right;", tags$img(src = "Logos/csiro.png", width = "40px", height = "40px", align='right'))),
+        title = tags$div( tags$div(style="vertical-align:middle!important; text-align:left!important; display:inline-block;", "SpectraCloud"), HTML('&nbsp&nbsp&nbsp'), tags$div(style="float: right;", tags$img(src = "Logos/csiro.png", width = "40px", height = "40px", align='right'))),
         hairline = F,
         shadow = T,
         left_panel = F,
@@ -126,21 +126,22 @@ shiny::shinyApp(
                         footer = NULL,
                         outline = FALSE,
                         height = NULL,
-                        #title = "Location",
                         id = 'crdMap',
-                        #f7Select(inputId = 'SMDepth', label = "Select Soil Moisture Depth (cm)", spectraFiles),
-                        f7Select(inputId = 'selectSpectra', label = '',choices= spectraFiles),
-                        
-                        leafletOutput("locationMap", height = 400 ),
-                        
-                        fluidRow(column(width = 2,
-                                        verbatimTextOutput("lat"),
-                                        verbatimTextOutput("long"),
-                                        verbatimTextOutput("geolocation")))
+                        fluidRow(f7Select(inputId = 'wgtselectSpectra', label = 'Choose a spectra file',choices= spectraFiles)),
+                        fluidRow(leafletOutput("wgtlocationMap", height = 400 )),
+                        fluidRow( tags$div( style=paste0("width: 150px"),f7Text(inputId = 'wgtLonVal', label = 'Longitude')),
+                                  tags$div( style=paste0("width: 150px"),f7Text(inputId = 'wgtLatVal', label = 'Latitude'))
+                                ),
+                        fluidRow( tags$div( style=paste0("width: 150px"),f7Select(inputId = 'wgtFromDepth', label = 'Upper Depth (cm)',choices= depthVals)),
+                                  tags$div( style=paste0("width: 150px"),f7Select(inputId = 'wgtToDepth', label = 'Lower Depth (cm)',choices= depthVals))
+                        ),
+                        fluidRow(f7Button(inputId = 'wgtSubmitSample', label = 'Submit Spectra', src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL)
+                        )
+                                  
                         
                       )
             )
-          ), 
+          ),
           side = "left" ),
           
           
@@ -285,6 +286,8 @@ shiny::shinyApp(
     session$allowReconnect(TRUE)
     
     RV <- reactiveValues()
+    RV$AllowGeoLocation=NULL
+    RV$currentLoc=NULL
     
     
     
@@ -292,35 +295,63 @@ shiny::shinyApp(
     
     acm_defaults <- function(map, x, y) addCircleMarkers(map, x, y, radius=8, color="black", fillColor="orange", fillOpacity=1, opacity=1, weight=2, stroke=TRUE, layerId="Selected")
     
-    output$lat <- renderPrint({
-      input$lat
+    observeEvent( RV$currentLoc, {
+      updateF7Text("wgtLonVal", value = formatC(RV$currentLoc$lng, digits = 5, format = "f") )
+      updateF7Text("wgtLatVal", value = formatC(RV$currentLoc$lat, digits = 5, format = "f"))
     })
-    
-    output$long <- renderPrint({
-      input$long
-      
+    observe({
+      RV$AllowGeoLocation= input$geolocation
     })
+
     
-    output$geolocation <- renderPrint({
-      input$geolocation
-    })
-    
-    output$locationMap <- renderLeaflet({
+    output$wgtlocationMap <- renderLeaflet({
       leaflet() %>%
         clearMarkers() %>%
         addTiles(group = "Map") %>%
         addProviderTiles("Esri.WorldImagery", options = providerTileOptions(noWrap = TRUE), group = "Satelite Image") %>%
 
         setView(lng = input$long, lat = input$lat, zoom = 18) %>%
-
-        
         addControlGPS() %>%
-        
         addLayersControl(
           baseGroups = c("Satelite Image", "Map"),
           overlayGroups = c( "SW Probes"),
           options = layersControlOptions(collapsed = T)
         )
+    })
+    
+    observeEvent(input$wgtlocationMap_click, {
+      click = input$locationMap_click
+      leafletProxy('locationMap')%>%clearMarkers%>%addMarkers(lng = click$lng, lat = click$lat)
+      RV$currentLoc$lng = click$lng 
+      RV$currentLoc$lat = click$lat
+      print(RV$currentLoc$lng)
+      
+    })
+    
+    
+    observeEvent(input$wgtSubmitSample, {
+      
+      req(input$wgtSubmitSample)
+      tmpFile <- tempfile(pattern = 'upSpec_', tmpdir = localUploadDir, fileext = '.dat')
+      
+      drop_download(path='spectrafiles/ross/archive_20392.asd', local_path = tmpFile, dtoken = token  )
+      
+      response <-  POST(paste0(spectraAPIServer, '/SoilSpectra/Upload'), body = list(fileinfo = upload_file(tmpFile), 
+                                                                         attribute='TEST',  
+                                                                         longitude='151.2345', 
+                                                                         latitude='-25.7777', 
+                                                                         upperDepth='0.0', 
+                                                                         lowerDepth='.25',
+                                                                         userName='BOBsBrother',
+                                                                         specType='ASD',
+                                                                         format='json'
+                                                                         ))
+
+         stream <- content(response, as="text", encoding	='UTF-8')
+        print(stream)
+        
+        
+      
     })
     
     
