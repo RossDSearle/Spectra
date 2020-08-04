@@ -13,9 +13,9 @@ library(rhandsontable)
 library(rdrop2)
 library(RCurl)
 
+debugMode <- T
 
-
-defWidth = '380px'
+defWidth = 400
 loaderTime = 1
 
 
@@ -34,7 +34,7 @@ spectraServer <- 'http://esoil.io/APIDev'
 
 
 token <- readRDS("droptoken.rds")
-print(drop_acc(dtoken = token))
+#print(drop_acc(dtoken = token))
 fls <- drop_dir(dropBoxPath, dtoken = token)  %>% data.frame()
 spectraFiles <- fls$name
 
@@ -56,7 +56,7 @@ shiny::shinyApp(
     function onError (err) {
     Shiny.onInputChange("geolocation", false);
     }
-    
+
    function onSuccess (position) {
       setTimeout(function () {
           var coords = position.coords;
@@ -80,61 +80,72 @@ shiny::shinyApp(
     preloader = F,
     loading_duration = loaderTime,
     f7TabLayout(
-     # panels = tagList(
-        # f7Panel(title = "About", side = "left", theme = "dark", effect = "cover",
-        #         
-        #         # f7Link(label = "About BARS", src = "https://www.csiro.au/en/Research/AF/Areas/Boorowa-Agricultural-Research-Station", external = TRUE),
-        #         # f7Link(label = "About CSIRO Ag & Food", src = "https://www.csiro.au/en/Research/AF", external = TRUE),
-        #         # f7Link(label = "About CSIRO", src = "https://www.csiro.au", external = TRUE),
-        #         # f7Link(label = "BoM Boowora", src = "http://www.bom.gov.au/places/nsw/boorowa/", external = TRUE),
-        #         
-        #         f7PanelItem(title = 'test', tabName = 'Weather'),
-        #         f7Link(label = "BoM Boowora", src = "Weather", external = F)
-        #         
-        #         
-        #         
-        #         )
-        #f7Panel(title = "Right Panel", side = "right", theme = "dark", "Blabla", effect = "cover")
-     # ),
+     panels = tagList(
+     f7Panel(title = "About", side = "right", theme = "light", effect = "cover",
+
+             HTML('<H1> About</H1>This is a demo App to explore some possible use cases and workflows for the Soil Spectral Infrastructure project,<br><br><br>'),
+ 
+             f7Block(
+               strong = TRUE, inset = T,
+               f7BlockHeader(text = "Login"),
+               
+               f7Text( inputId = 'wgtLoginUser', label = 'Username', placeholder='Demo'),
+               f7Password(inputId = 'wgtLoginPwd', label = 'Password', placeholder='Demo'),
+               f7Button(inputId = 'wgtLoginButton', label = 'Login', src = NULL, color = 'blue', fill = TRUE, outline = F, shadow = T, rounded = T)
+             )
+
+             # f7Link(label = "About BARS", src = "https://www.csiro.au/en/Research/AF/Areas/Boorowa-Agricultural-Research-Station", external = TRUE),
+             # f7Link(label = "About CSIRO Ag & Food", src = "https://www.csiro.au/en/Research/AF", external = TRUE),
+             # f7Link(label = "About CSIRO", src = "https://www.csiro.au", external = TRUE),
+             # f7Link(label = "BoM Boowora", src = "http://www.bom.gov.au/places/nsw/boorowa/", external = TRUE),
+
+             )
+     #f7Panel(title = "Right Panel", side = "right", theme = "dark", "Blabla", effect = "cover")
+     ),
  
 ##################################  NAVIGATION BAR   ##################################      
       navbar = f7Navbar(
-       # title = shiny::tags$div(style="background-image: url('Logos/HdrBkGrdImage.PNG');", tags$img(src = "Logos/csiro.png", width = "40px", height = "40px"), "Boowora Agricultutral Research Station "),
-        title = tags$div( tags$div(style="vertical-align:middle!important; text-align:left!important; display:inline-block;", "SpectraCloud"), HTML('&nbsp&nbsp&nbsp'), tags$div(style="float: right;", tags$img(src = "Logos/csiro.png", width = "40px", height = "40px", align='right'))),
-        hairline = F,
+        title = tags$div(
+          tags$div(style="float: left;", tags$img(src = "Logos/csiro.png", width = "40px", height = "40px", align='left'), HTML('&nbsp&nbsp&nbsp'),
+          tags$div(style="font-size: 30px; vertical-align:middle!important; text-align:left!important; display:inline-block;", "SpectraCloud") 
+                         ),
+         ),
+        hairline = T,
         shadow = T,
         left_panel = F,
-        right_panel = F
+        right_panel = T
       ),
 
 
-##################################  UI - SOIL MOISTURE PROBE MAP  ##################################         
+##################################  UI - Submit Spectra  ##################################         
       
       f7Tabs(
         animated = T,
+        id = "tabsAll",
         #swipeable = TRUE,
         f7Tab(
           tabName = "Submit",
-          icon = f7Icon("cloud_upload", old = TRUE),
+          icon = f7Icon("cloud_upload"),
           active = TRUE,
+
           f7Float( f7Shadow(
             intensity = 24,
             hover = TRUE,
-            tags$div( style=paste0("width: ", defWidth),
+            tags$div( style=paste0("width: ", defWidth, 'px'),
                       f7Card(
-                        title = NULL,
-                        footer = NULL,
-                        outline = FALSE,
-                        height = NULL,
                         id = 'crdMap',
-                        fluidRow(f7Select(inputId = 'wgtselectSpectra', label = 'Choose a spectra file',choices= spectraFiles)),
-                        fluidRow(leafletOutput("wgtlocationMap", height = 400 )),
+                        
+                        fluidRow(f7Select(inputId = 'wgtselectSpectra', label = 'Choose a spectra file to upload',choices= spectraFiles)),
+                        fluidRow(leafletOutput("wgtlocationMap", height = 350 )),
                         fluidRow( tags$div( style=paste0("width: 150px"),f7Text(inputId = 'wgtLonVal', label = 'Longitude')),
                                   tags$div( style=paste0("width: 150px"),f7Text(inputId = 'wgtLatVal', label = 'Latitude'))
-                                ),
+                        ),
                         fluidRow( tags$div( style=paste0("width: 150px"),f7Select(inputId = 'wgtFromDepth', label = 'Upper Depth (cm)',choices= depthVals)),
                                   tags$div( style=paste0("width: 150px"),f7Select(inputId = 'wgtToDepth', label = 'Lower Depth (cm)',choices= depthVals))
                         ),
+                        fluidRow( tags$div( style=paste0("width: 150px"),f7Select(inputId = 'wgtSpecType', label = 'Spectra Type',choices=spectralDevices))
+                        ),          
+                       
                         fluidRow(f7Button(inputId = 'wgtSubmitSample', label = 'Submit Spectra', src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL)
                         )
                                   
@@ -142,86 +153,82 @@ shiny::shinyApp(
                       )
             )
           ),
-          side = "left" ),
+          side = "left" )
           
-          
-          f7Float(  f7Shadow(
-            intensity = 100,
-            hover = TRUE,
-            tags$div( style=paste0("width: ", defWidth),
-                      f7Card(
-                        title = "NotSureYet",
-                        id = 'crdMap',
-                        
-                        
-                      ))), side = "left" )
           
         ),
 
         
-################################## UI - SOIL MOISTURE MAPS   ##################################           
+################################## UI - Spectra RESULTS   ##################################           
         f7Tab(
-          tabName = "Manage Sensors",
-          icon = f7Icon("plus_square_fill_on_square_fill", old = F ),
+          tabName = "Spectra Results",
+          icon = f7Icon("cloud_download"),
           active = FALSE,
+
           f7Float( 
           f7Shadow(
             intensity = 10,
             hover = TRUE,
-            div( style=paste0("width: ", defWidth ,"; align='left'; vertical-align: middle;"),
+            div( style=paste0("width: ", defWidth ,"px; align='left'; vertical-align: middle;"),
                  f7Card(
-                   title = NULL,
-                   #f7DatePicker( "SMmapDate", label='Select Map Date', value = NULL, min = NULL, max = NULL, format = "yyyy-mm-dd" ),
-                  # f7Select(inputId = 'SMDepthList', label = "Soil Depth",  choices =  soilDepthsDF$sdLabels),
-                   HTML('<BR>'),
-                   #div( style=paste0("width: 100px"),
-                   f7Button(inputId = 'drawSMmapbtn', label = "Draw Soil Moisture Map", src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL),
-                   #),
-                   HTML('<BR>'),
-                   f7Progress(id = "pg1", value = 0, color = "blue"),
-                   
-                   
-                   leafletOutput("moistureMap2", height = 400 )
-                   
+                   title = 'Soil Analysis',
+                   rHandsontableOutput(outputId = 'wgtSoilPropTable'),
+                   HTML('<BR>')
                  )
             )
-          )
-        ), side = "left"),
+          ),
+          
+        ),
+        f7Float( 
+          f7Shadow(
+            intensity = 10,
+            hover = TRUE,
+            div( style=paste0("width: ", defWidth ,"px; align='left'; vertical-align: middle;"),
+                 f7Card(
+                   title = 'Raw Spectra',
+                   plotOutput(outputId =  'wgtSpectraPlot'),
+                   HTML('<BR>')
+                 )
+            )
+          ),
+          
+        )
+        ,
+        f7Float( 
+          f7Shadow(
+            intensity = 10,
+            hover = TRUE,
+            div( style=paste0("width: ", defWidth ,"px; align='left'; vertical-align: middle;"),
+                 f7Card(
+                   title = 'Metadata',
+                   rHandsontableOutput(outputId = 'wgtMetadataTable'),
+                   HTML('<BR>')
+                 )
+            )
+          ),
+          
+        )
+        ,side = "left"),
         
         
-##################################  UI - WEATHER   ##################################          
+##################################  UI - My Spectra   ##################################          
         f7Tab(
-          tabName = "Login",
-          icon = f7Icon("lock_fill", old = F),
+          tabName = "My Spectra",
+          icon = f7Icon("lock_fill"),
           active = FALSE,
           f7Float(  
             f7Shadow(
             intensity = 10,
             hover = TRUE,
             
+            
+            
             tags$div( style=paste0("width: ", defWidth),
                       
                        f7Card(
-                        title = paste0("Todays Weather (", format(Sys.Date(), format="%B %d %Y"), ')' ),
-                        
-                        verbatimTextOutput("todaysRainfall"),
-                        verbatimTextOutput("todaysMaxRainfall"),
-                        HTML('<BR>'),
-                        verbatimTextOutput("todaysCurrentTemperature"),
-                        verbatimTextOutput("todaysMinTemperature"),
-                        verbatimTextOutput("todaysMaxTemperature"),
-                        HTML('<BR>'),
-                        verbatimTextOutput("todaysCurrentHumidity"),
-                        verbatimTextOutput("todaysMinHumidity"),
-                        verbatimTextOutput("todaysMaxHumidity"),
-                        HTML('<BR>'),
-                        verbatimTextOutput("todaysCurrentWindspeed"),
-                        verbatimTextOutput("todaysMinWindspeed"),
-                        verbatimTextOutput("todaysMaxWindspeed"),
-                        HTML('<BR>'),
-                        verbatimTextOutput("todaysCurrentWindDirection")
-                        # verbatimTextOutput("todaysMinHumidity"),
-                        # verbatimTextOutput("todaysMaxHumidity")
+                        title = paste0('' ),
+                        f7Picker(inputId = 'wgtMySpectraList', label='Choose a spectra to display',  choices = c('a', 'gggggg', 'bbbbbbb') ),
+                       
                       ))), side = "left"), 
                       
           f7Float(  
@@ -231,30 +238,18 @@ shiny::shinyApp(
               
               tags$div( style=paste0("width: ", defWidth),           
             f7Card(
-              title = "Weather History",
-              prettyRadioButtons(
-                
-                inputId = "WeatherHistoryButtons",
-                label = "Variable:",
-                
-                c("Rainfall" = "Rainfall",
-                  "Temperature" = "Temperature",
-                  "Humidity" = "Humidity",
-                  "Windspeed" = "Wind-Speed"),
-                inline = TRUE,
-                status = "success",
-                animation = "pulse",
-                bigger = T
-              ),
-              dygraphOutput("WeatherHistoryChart", height = "300px")
-            )))), side = "left"),
+              
+           
+            )
+            
+            ))), side = "left"),
             
             
 ##################################  UI - SOIL DATA MAP   ##################################             
         
         f7Tab(
           tabName = "Preferences",
-          icon = f7Icon("gear", old = F),
+          icon = f7Icon("gear"),
           active = FALSE,
           f7Float(
           f7Shadow(
@@ -288,12 +283,50 @@ shiny::shinyApp(
     RV <- reactiveValues()
     RV$AllowGeoLocation=NULL
     RV$currentLoc=NULL
-    
-    
-    
+    RV$currentSpectraResults=NULL
+
     ##################################  SERVER - GLOBAL PROCESSING   ##################################
     
     acm_defaults <- function(map, x, y) addCircleMarkers(map, x, y, radius=8, color="black", fillColor="orange", fillOpacity=1, opacity=1, weight=2, stroke=TRUE, layerId="Selected")
+    
+    
+    
+    observeEvent(input$wgtLoginButton, {
+      
+      f7Dialog(
+        title = "Its only a demo",
+        text = "Authentication is not enabled as yet but could be if needs be.",
+        session = session
+      )
+      
+    })
+    
+    output$wgtSpectraPlot = renderPlot({
+      req(RV$currentSpectraResults$Spectrum)
+        plot(RV$currentSpectraResults$Spectrum, type='l', col='red')
+    })
+    
+    
+    output$wgtMetadataTable = renderRHandsontable({
+      req(RV$currentSpectraResults)
+      if(nrow(RV$currentSpectraResults$Metadata) > 0){
+        rhandsontable(RV$currentSpectraResults$Metadata,   manualColumnResize = T, readOnly = TRUE, rowHeaders = F)%>%
+          hot_table(highlightCol = F, highlightRow = F)
+      }else{
+        return(NULL)
+      }
+    })
+    
+    output$wgtSoilPropTable = renderRHandsontable({
+      req(RV$currentSpectraResults)
+      if(nrow(RV$currentSpectraResults$SoilValues) > 0){
+        rhandsontable(RV$currentSpectraResults$SoilValues,   manualColumnResize = T, readOnly = TRUE, rowHeaders = F)%>%
+          hot_table(highlightCol = F, highlightRow = F)
+      }else{
+        return(NULL)
+      }
+    })
+    
     
     observeEvent( RV$currentLoc, {
       updateF7Text("wgtLonVal", value = formatC(RV$currentLoc$lng, digits = 5, format = "f") )
@@ -310,18 +343,21 @@ shiny::shinyApp(
         addTiles(group = "Map") %>%
         addProviderTiles("Esri.WorldImagery", options = providerTileOptions(noWrap = TRUE), group = "Satelite Image") %>%
 
-        setView(lng = input$long, lat = input$lat, zoom = 18) %>%
+       # setView(lng = input$long, lat = input$lat, zoom = 18) %>% #### this sets view to your current location
+        
+        setView(lng = startLon, lat = startLat, zoom = 14) %>%
         addControlGPS() %>%
         addLayersControl(
           baseGroups = c("Satelite Image", "Map"),
-          overlayGroups = c( "SW Probes"),
+         # overlayGroups = c( "SW Probes"),
           options = layersControlOptions(collapsed = T)
         )
     })
     
     observeEvent(input$wgtlocationMap_click, {
-      click = input$locationMap_click
-      leafletProxy('locationMap')%>%clearMarkers%>%addMarkers(lng = click$lng, lat = click$lat)
+      click = input$wgtlocationMap_click
+      print(click)
+      leafletProxy('wgtlocationMap')%>%clearMarkers%>%addMarkers(lng = click$lng, lat = click$lat)
       RV$currentLoc$lng = click$lng 
       RV$currentLoc$lat = click$lat
       print(RV$currentLoc$lng)
@@ -333,23 +369,31 @@ shiny::shinyApp(
       
       req(input$wgtSubmitSample)
       tmpFile <- tempfile(pattern = 'upSpec_', tmpdir = localUploadDir, fileext = '.dat')
-      
-      drop_download(path='spectrafiles/ross/archive_20392.asd', local_path = tmpFile, dtoken = token  )
-      
-      response <-  POST(paste0(spectraAPIServer, '/SoilSpectra/Upload'), body = list(fileinfo = upload_file(tmpFile), 
-                                                                         attribute='TEST',  
-                                                                         longitude='151.2345', 
-                                                                         latitude='-25.7777', 
-                                                                         upperDepth='0.0', 
-                                                                         lowerDepth='.25',
-                                                                         userName='BOBsBrother',
-                                                                         specType='ASD',
-                                                                         format='json'
-                                                                         ))
 
-         stream <- content(response, as="text", encoding	='UTF-8')
-        print(stream)
-        
+      if(!debugMode){
+          drop_download(path='spectrafiles/ross/archive_20392.asd', local_path = tmpFile, dtoken = token  )
+    
+          response <-  POST(paste0(spectraAPIServer, '/SoilSpectra/Upload'), body = list(fileinfo = upload_file(tmpFile),
+                                                                             
+                                                                             longitude=RV$currentLoc$lng ,
+                                                                             latitude=RV$currentLoc$lat ,
+                                                                             upperDepth=input$wgtFromDepth,
+                                                                             lowerDepth=input$wgtToDepth,
+                                                                             userName=currentUser,
+                                                                             specType=input$wgtSpecType,
+                                                                             format='json'
+                                                                             ))
+          stream <- content(response, as="text", encoding	='UTF-8')
+          RV$currentSpectraResults <- fromJSON(stream)
+      
+      }else{
+        RV$currentSpectraResults <- readRDS('c:/temp/payload.rds')
+      }
+         
+      updateF7Tabs(session, id = "tabsAll", selected = "Spectra Results")
+    
+      
+      
         
       
     })
