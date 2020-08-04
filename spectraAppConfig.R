@@ -9,7 +9,7 @@ startLon <- 141.5368
 
 machineName <- as.character(Sys.info()['nodename'])
 if(machineName=='soils-discovery'){
-  localUploadDir <- '/srv/shiny-server/Spectra'
+  localUploadDir <- '/mnt/data/Spectra/tmpUploads'
 }else{
   localUploadDir<- 'C:/temp/specl'
 }

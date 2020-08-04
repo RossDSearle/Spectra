@@ -13,9 +13,9 @@ library(rhandsontable)
 library(rdrop2)
 library(RCurl)
 
-debugMode <- T
+debugMode <- F
 
-defWidth = 400
+defWidth = 380
 loaderTime = 1
 
 
@@ -136,7 +136,7 @@ shiny::shinyApp(
                         id = 'crdMap',
                         
                         fluidRow(f7Select(inputId = 'wgtselectSpectra', label = 'Choose a spectra file to upload',choices= spectraFiles)),
-                        fluidRow(leafletOutput("wgtlocationMap", height = 350 )),
+                        fluidRow(leafletOutput("wgtlocationMap", height = defWidth-30, width = defWidth-30)),
                         fluidRow( tags$div( style=paste0("width: 150px"),f7Text(inputId = 'wgtLonVal', label = 'Longitude')),
                                   tags$div( style=paste0("width: 150px"),f7Text(inputId = 'wgtLatVal', label = 'Latitude'))
                         ),
@@ -329,9 +329,13 @@ shiny::shinyApp(
     
     
     observeEvent( RV$currentLoc, {
-      updateF7Text("wgtLonVal", value = formatC(RV$currentLoc$lng, digits = 5, format = "f") )
-      updateF7Text("wgtLatVal", value = formatC(RV$currentLoc$lat, digits = 5, format = "f"))
+      req(RV$currentLoc)
+      
+      #print(RV$currentLoc)
+      # updateF7Text("wgtLonVal", value = formatC(RV$currentLoc$lng, digits = 5, format = "f") )
+      # updateF7Text("wgtLatVal", value = formatC(RV$currentLoc$lat, digits = 5, format = "f"))
     })
+    
     observe({
       RV$AllowGeoLocation= input$geolocation
     })
@@ -356,12 +360,13 @@ shiny::shinyApp(
     
     observeEvent(input$wgtlocationMap_click, {
       click = input$wgtlocationMap_click
-      print(click)
+      
       leafletProxy('wgtlocationMap')%>%clearMarkers%>%addMarkers(lng = click$lng, lat = click$lat)
       RV$currentLoc$lng = click$lng 
       RV$currentLoc$lat = click$lat
-      print(RV$currentLoc$lng)
-      
+       updateF7Text(session = session, inputId="wgtLonVal", value = formatC(click$lng, digits = 5, format = "f") )
+       updateF7Text(session = session, inputId="wgtLatVal", value = formatC(click$lat, digits = 5, format = "f"))
+       
     })
     
     
@@ -369,7 +374,7 @@ shiny::shinyApp(
       
       req(input$wgtSubmitSample)
       tmpFile <- tempfile(pattern = 'upSpec_', tmpdir = localUploadDir, fileext = '.dat')
-
+print(tmpFile)
       if(!debugMode){
           drop_download(path='spectrafiles/ross/archive_20392.asd', local_path = tmpFile, dtoken = token  )
     
