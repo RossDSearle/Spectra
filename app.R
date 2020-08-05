@@ -146,7 +146,7 @@ shiny::shinyApp(
                         fluidRow( tags$div( style=paste0("width: 150px"),f7Select(inputId = 'wgtSpecType', label = 'Spectra Type',choices=spectralDevices))
                         ),          
                        
-                        fluidRow(f7Button(inputId = 'wgtSubmitSample', label = 'Submit Spectra', src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T, size = NULL)
+                        fluidRow(f7Button(inputId = 'wgtSubmitSample', label = 'Submit Spectra', src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T)
                         )
                                   
                         
@@ -177,6 +177,7 @@ shiny::shinyApp(
                           
                           title = 'Choose a spectra to display from the map above of the list below',
                           fluidRow(leafletOutput("wgtMySpectraMap", height = defWidth-50, width = defWidth-30)),
+                          
                           fluidRow( f7Picker(inputId = 'wgtMySpectraIDs', label='Choose a spectra to display from the map above of the list below',  choices = c('') )),
                         #  f7SmartSelect( inputId = 'wgtMySpectraSS' ,  label='Choose a spectra to display',  choices = c(''))
                          # f7DatePicker( inputId = 'wgtStartDate', label='Start Date')
@@ -191,6 +192,10 @@ shiny::shinyApp(
               tags$div( style=paste0("width: ", defWidth),           
                         f7Card(
                           
+                          fluidRow(htmlOutput("wgtSpecInfoTxt")),
+                          fluidRow(HTML('<BR>')),
+                           fluidRow(f7Button(inputId = 'wgtButgetSpectraInfo', label = 'Get Spectra Data', src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T))
+                                   
                           
                         )
                         
@@ -292,15 +297,42 @@ shiny::shinyApp(
     RV$currentLoc=NULL
     RV$currentSpectraResults=NULL
     RV$AvailSepctra=NULL
+    RV$currentSelectedSpectraID=NULL
 
     ##################################  SERVER - GLOBAL PROCESSING   ##################################
     
     acm_defaults <- function(map, x, y) addCircleMarkers(map, x, y, radius=8, color="black", fillColor="orange", fillOpacity=1, opacity=1, weight=2, stroke=TRUE, layerId="Selected")
     
     
+    output$wgtSpecInfoTxt <- renderUI({
+    req(RV$currentSelectedSpectraID)
+      
+    rec <- RV$AvailSepctra[RV$AvailSepctra$SpectraID == RV$currentSelectedSpectraID, ]
+    asrisID <- paste0(rec$agency_code, '_', rec$proj_code, '_',rec$s_id, '_',rec$o_id, '_',rec$h_no, '_',rec$samp_no)
+    HTML(paste0('
+    <H3>Metadata For ', rec$SpectraID, ' </H3>
+    <table><tr><td><b>ASRIS ID : </b></td><td>',asrisID  ,'</td></tr></table>
+    <table><tr><td><b>ASpecta Type : </b></td><td>',rec$Type  ,'</td></tr></table>
+     <table><tr><td><b>AUser Name : </b></td><td>',rec$Username  ,'</td></tr></table>
+      <table><tr><td><b>ATime Submitted Type : </b></td><td>',rec$SubmitTime  ,'</td></tr></table>
+       <table><tr><td><b>ASpecta Latitude : </b></td><td>',rec$Lattitude  ,'</td></tr></table>
+        <table><tr><td><b>ASpecta Longitude : </b></td><td>',rec$Longitude  ,'</td></tr></table>
+         <table><tr><td><b>ASpecta Upper Depth : </b></td><td>',rec$UpperDepth  ,'</td></tr></table>
+          <table><tr><td><b>ASpecta LowerDepth : </b></td><td>',rec$LowerDepth  ,'</td></tr></table>
+           <table><tr><td><b>ASpecta Origina lName : </b></td><td>',rec$OriginalName  ,'</td></tr></table>
+    ')) })
+    
     observe({
       
+      req(RV$AvailSepctra)
+      clickm <-input$wgtMySpectraMap_marker_click
+      if(is.null(clickm))
+        return()
       
+      sid <- clickm$id
+      print(sid)
+      RV$currentSelectedSpectraID <- sid
+     
     })
     
     output$wgtMySpectraMap <- renderLeaflet({
@@ -309,12 +341,22 @@ shiny::shinyApp(
           print(RV$AvailSepctra)
       lats <- RV$AvailSepctra$Lattitude
       lons <- RV$AvailSepctra$Longitude
+      specIds <- RV$AvailSepctra$SpectraID
+      
+      labs <- lapply(seq(nrow(RV$AvailSepctra)), function(i) {
+        paste0( '<li>SpectraID : ', RV$AvailSepctra[i, "SpectraID"], '</li>
+                <li>File Name : ', RV$AvailSepctra[i, "OriginalName"], '</li>
+                <li>Upper Depth : ', RV$AvailSepctra[i, "UpperDepth"], '</li>
+                <li>Lower Depth : ', RV$AvailSepctra[i, "LowerDepth"], '</li>'
+                )
+        
+      })
       
       leaflet() %>%
         clearMarkers() %>%
         addTiles(group = "Map") %>%
         addProviderTiles("Esri.WorldImagery", options = providerTileOptions(noWrap = TRUE), group = "Satelite Image") %>%
-        clearMarkers%>%addMarkers(lng = lons, lat = lats)%>%
+        clearMarkers%>%addMarkers(lng = lons, lat = lats, label =  lapply(labs, HTML), layerId=specIds)%>%
         # setView(lng = input$long, lat = input$lat, zoom = 18) %>% #### this sets view to your current location
         
         setView(lng = startLon, lat = startLat, zoom = 14) %>%
