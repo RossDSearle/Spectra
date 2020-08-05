@@ -174,10 +174,10 @@ shiny::shinyApp(
               tags$div( style=paste0("width: ", defWidth, 'px'),
                         
                         f7Card(
-                          title = paste0('' ),
                           
+                          title = 'Choose a spectra to display from the map above of the list below',
                           fluidRow(leafletOutput("wgtMySpectraMap", height = defWidth-50, width = defWidth-30)),
-                          fluidRow( f7Picker(inputId = 'wgtMySpectraIDs', label='Choose a spectra to display',  choices = c('') )),
+                          fluidRow( f7Picker(inputId = 'wgtMySpectraIDs', label='Choose a spectra to display from the map above of the list below',  choices = c('') )),
                         #  f7SmartSelect( inputId = 'wgtMySpectraSS' ,  label='Choose a spectra to display',  choices = c(''))
                          # f7DatePicker( inputId = 'wgtStartDate', label='Start Date')
                           
