@@ -1,7 +1,7 @@
 
 
 dropBoxPath <- 'SpectraFiles/Ross'
-currentUser <- 'Ross'
+currentUser <- 'DemoUser'
 
 spectraAPIServer <- 'http://esoil.io/APIDev'
 startLat <- -36.33387

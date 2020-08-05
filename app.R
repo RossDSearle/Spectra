@@ -136,7 +136,7 @@ shiny::shinyApp(
                         id = 'crdMap',
                         
                         fluidRow(f7Select(inputId = 'wgtselectSpectra', label = 'Choose a spectra file to upload',choices= spectraFiles)),
-                        fluidRow(leafletOutput("wgtlocationMap", height = defWidth-30, width = defWidth-30)),
+                        fluidRow(leafletOutput("wgtlocationMap", height = defWidth-50, width = defWidth-30)),
                         fluidRow( tags$div( style=paste0("width: 150px"),f7Text(inputId = 'wgtLonVal', label = 'Longitude')),
                                   tags$div( style=paste0("width: 150px"),f7Text(inputId = 'wgtLatVal', label = 'Latitude'))
                         ),
@@ -171,12 +171,12 @@ shiny::shinyApp(
               
               
               
-              tags$div( style=paste0("width: ", defWidth),
+              tags$div( style=paste0("width: ", defWidth, 'px'),
                         
                         f7Card(
                           title = paste0('' ),
                           
-                          fluidRow(leafletOutput("wgtMySpectraMap", height = defWidth-30, width = defWidth-30)),
+                          fluidRow(leafletOutput("wgtMySpectraMap", height = defWidth-50, width = defWidth-30)),
                           fluidRow( f7Picker(inputId = 'wgtMySpectraIDs', label='Choose a spectra to display',  choices = c('') )),
                         #  f7SmartSelect( inputId = 'wgtMySpectraSS' ,  label='Choose a spectra to display',  choices = c(''))
                          # f7DatePicker( inputId = 'wgtStartDate', label='Start Date')
@@ -306,7 +306,7 @@ shiny::shinyApp(
     output$wgtMySpectraMap <- renderLeaflet({
       
       req(RV$AvailSepctra)
-      
+          print(RV$AvailSepctra)
       lats <- RV$AvailSepctra$Lattitude
       lons <- RV$AvailSepctra$Longitude
       
@@ -338,15 +338,21 @@ shiny::shinyApp(
       RV$AvailSepctra <- dc
       items <- RV$AvailSepctra$SpectraID
       
-    #   updateF7Picker(session=session, inputId = 'wgtMySpectraIDs',
-    #                  value = items[1],
-    #                  choices = items,
-    #                  openIn = "auto",
-    #                  toolbarCloseText = "Done",
-    #                  toolbar = TRUE,
-    #                  closeByOutsideClick = FALSE,
-    #                  sheetSwipeToClose = FALSE)
-    # 
+      updateF7Picker(session=session, inputId = 'wgtMySpectraIDs',
+                     value = items[1],
+                     choices = items
+                     )
+      
+      # updateF7Picker(session=session, inputId = 'wgtMySpectraIDs',
+      #                value = items[1],
+      #                choices = items,
+      #                openIn = "auto",
+      #                toolbarCloseText = "Done",
+      #                toolbar = TRUE,
+      #                closeByOutsideClick = FALSE,
+      #                sheetSwipeToClose = FALSE
+      # )
+
      })
     
   
