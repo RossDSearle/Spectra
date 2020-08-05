@@ -369,8 +369,8 @@ shiny::shinyApp(
     output$wgtMetadataTable = renderRHandsontable({
       req(RV$currentSpectraResults)
       if(nrow(RV$currentSpectraResults$Metadata) > 0){
-        rhandsontable(RV$currentSpectraResults$Metadata,   manualColumnResize = T, readOnly = TRUE, rowHeaders = F)%>%
-          hot_table(highlightCol = F, highlightRow = F)
+        rhandsontable(RV$currentSpectraResults$Metadata, manualColumnResize = T, readOnly = TRUE, rowHeaders = F)%>%
+          hot_table(highlightCol = F, highlightRow = F) 
       }else{
         return(NULL)
       }
