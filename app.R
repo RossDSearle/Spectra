@@ -17,7 +17,7 @@ debugMode <- F
 
 defWidth = 380
 loaderTime = 1
-
+DEF_User = 'DemoUser'
 
 
 machineName <- as.character(Sys.info()['nodename'])
@@ -157,7 +157,45 @@ shiny::shinyApp(
           
           
         ),
-
+        
+        
+        ##################################  UI - My Spectra   ##################################          
+        f7Tab(
+          tabName = "My Spectra",
+          icon = f7Icon("lock_fill"),
+          active = FALSE,
+          f7Float(  
+            f7Shadow(
+              intensity = 10,
+              hover = TRUE,
+              
+              
+              
+              tags$div( style=paste0("width: ", defWidth),
+                        
+                        f7Card(
+                          title = paste0('' ),
+                          
+                          fluidRow(leafletOutput("wgtMySpectraMap", height = defWidth-30, width = defWidth-30)),
+                          fluidRow( f7Picker(inputId = 'wgtMySpectraIDs', label='Choose a spectra to display',  choices = c('') )),
+                        #  f7SmartSelect( inputId = 'wgtMySpectraSS' ,  label='Choose a spectra to display',  choices = c(''))
+                         # f7DatePicker( inputId = 'wgtStartDate', label='Start Date')
+                          
+                        ))), side = "left"), 
+          
+          f7Float(  
+            f7Shadow(
+              intensity = 10,
+              hover = TRUE,
+              
+              tags$div( style=paste0("width: ", defWidth),           
+                        f7Card(
+                          
+                          
+                        )
+                        
+              ))), side = "left"),
+        
         
 ################################## UI - Spectra RESULTS   ##################################           
         f7Tab(
@@ -211,38 +249,6 @@ shiny::shinyApp(
         ,side = "left"),
         
         
-##################################  UI - My Spectra   ##################################          
-        f7Tab(
-          tabName = "My Spectra",
-          icon = f7Icon("lock_fill"),
-          active = FALSE,
-          f7Float(  
-            f7Shadow(
-            intensity = 10,
-            hover = TRUE,
-            
-            
-            
-            tags$div( style=paste0("width: ", defWidth),
-                      
-                       f7Card(
-                        title = paste0('' ),
-                        f7Picker(inputId = 'wgtMySpectraList', label='Choose a spectra to display',  choices = c('a', 'gggggg', 'bbbbbbb') ),
-                       
-                      ))), side = "left"), 
-                      
-          f7Float(  
-            f7Shadow(
-              intensity = 10,
-              hover = TRUE,
-              
-              tags$div( style=paste0("width: ", defWidth),           
-            f7Card(
-              
-           
-            )
-            
-            ))), side = "left"),
             
             
 ##################################  UI - SOIL DATA MAP   ##################################             
@@ -281,16 +287,69 @@ shiny::shinyApp(
     session$allowReconnect(TRUE)
     
     RV <- reactiveValues()
+    RV$currentUser=NULL
     RV$AllowGeoLocation=NULL
     RV$currentLoc=NULL
     RV$currentSpectraResults=NULL
+    RV$AvailSepctra=NULL
 
     ##################################  SERVER - GLOBAL PROCESSING   ##################################
     
     acm_defaults <- function(map, x, y) addCircleMarkers(map, x, y, radius=8, color="black", fillColor="orange", fillOpacity=1, opacity=1, weight=2, stroke=TRUE, layerId="Selected")
     
     
+    observe({
+      
+      
+    })
     
+    output$wgtMySpectraMap <- renderLeaflet({
+      
+      req(RV$AvailSepctra)
+      
+      lats <- RV$AvailSepctra$Lattitude
+      lons <- RV$AvailSepctra$Longitude
+      
+      leaflet() %>%
+        clearMarkers() %>%
+        addTiles(group = "Map") %>%
+        addProviderTiles("Esri.WorldImagery", options = providerTileOptions(noWrap = TRUE), group = "Satelite Image") %>%
+        clearMarkers%>%addMarkers(lng = lons, lat = lats)%>%
+        # setView(lng = input$long, lat = input$lat, zoom = 18) %>% #### this sets view to your current location
+        
+        setView(lng = startLon, lat = startLat, zoom = 14) %>%
+        addControlGPS() %>%
+        addLayersControl(
+          baseGroups = c("Satelite Image", "Map"),
+          overlayGroups = c( "My Spectra"),
+          options = layersControlOptions(collapsed = T)
+        )
+    })
+    
+    observe({
+      
+     req(RV$currentUser)
+      
+      url <- paste0('http://esoil.io/APIDev/SoilSpectra/availableSpectra?username=DemoUser')
+      response <-  GET(paste0(url))
+      
+      stream <- content(response, as="text", encoding	='UTF-8')
+      dc <- fromJSON(stream)
+      RV$AvailSepctra <- dc
+      items <- RV$AvailSepctra$SpectraID
+      
+      updateF7Picker(session=session, inputId = 'wgtMySpectraIDs',
+                     value = items[1],
+                     choices = items,
+                     openIn = "auto",
+                     toolbarCloseText = "Done",
+                     toolbar = TRUE,
+                     closeByOutsideClick = FALSE,
+                     sheetSwipeToClose = FALSE)
+
+    })
+    
+  
     observeEvent(input$wgtLoginButton, {
       
       f7Dialog(
@@ -338,10 +397,15 @@ shiny::shinyApp(
     
     observe({
       RV$AllowGeoLocation= input$geolocation
+     
     })
 
     
+    
     output$wgtlocationMap <- renderLeaflet({
+      
+      RV$currentUser = DEF_User  # need this here to fire existing spectra list update
+      
       leaflet() %>%
         clearMarkers() %>%
         addTiles(group = "Map") %>%
