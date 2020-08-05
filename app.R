@@ -338,16 +338,16 @@ shiny::shinyApp(
       RV$AvailSepctra <- dc
       items <- RV$AvailSepctra$SpectraID
       
-      updateF7Picker(session=session, inputId = 'wgtMySpectraIDs',
-                     value = items[1],
-                     choices = items,
-                     openIn = "auto",
-                     toolbarCloseText = "Done",
-                     toolbar = TRUE,
-                     closeByOutsideClick = FALSE,
-                     sheetSwipeToClose = FALSE)
-
-    })
+    #   updateF7Picker(session=session, inputId = 'wgtMySpectraIDs',
+    #                  value = items[1],
+    #                  choices = items,
+    #                  openIn = "auto",
+    #                  toolbarCloseText = "Done",
+    #                  toolbar = TRUE,
+    #                  closeByOutsideClick = FALSE,
+    #                  sheetSwipeToClose = FALSE)
+    # 
+     })
     
   
     observeEvent(input$wgtLoginButton, {
