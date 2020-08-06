@@ -178,7 +178,7 @@ shiny::shinyApp(
                           title = 'Choose a spectra to display from the map above of the list below',
                           fluidRow(leafletOutput("wgtMySpectraMap", height = defWidth-50, width = defWidth-30)),
                           
-                          fluidRow( f7Picker(inputId = 'wgtMySpectraIDs', label='Choose a spectra to display from the map above of the list below',  choices = c('') )),
+                         # fluidRow( f7Picker(inputId = 'wgtMySpectraIDs', label='Choose a spectra to display from the map above of the list below',  choices = c('') )),
                         #  f7SmartSelect( inputId = 'wgtMySpectraSS' ,  label='Choose a spectra to display',  choices = c(''))
                          # f7DatePicker( inputId = 'wgtStartDate', label='Start Date')
                           
@@ -302,6 +302,18 @@ shiny::shinyApp(
     ##################################  SERVER - GLOBAL PROCESSING   ##################################
     
     acm_defaults <- function(map, x, y) addCircleMarkers(map, x, y, radius=8, color="black", fillColor="orange", fillOpacity=1, opacity=1, weight=2, stroke=TRUE, layerId="Selected")
+    
+    observeEvent(input$wgtButgetSpectraInfo, {
+      
+      req(input$RV$currentSelectedSpectraID)
+
+        url <- paste0('http://esoil.io/APIDev/SoilSpectra/querySpectra?spectraID=',RV$currentSelectedSpectraID)
+        response <-  GET(paste0(url))
+        stream <- content(response, as="text", encoding	='UTF-8')
+        RV$currentSpectraResults <- fromJSON(stream)
+        updateF7Tabs(session, id = "tabsAll", selected = "Spectra Results")
+    })
+    
     
     
     output$wgtSpecInfoTxt <- renderUI({
@@ -486,7 +498,6 @@ shiny::shinyApp(
       
       req(input$wgtSubmitSample)
       tmpFile <- tempfile(pattern = 'upSpec_', tmpdir = localUploadDir, fileext = '.dat')
-print(tmpFile)
       if(!debugMode){
           drop_download(path='spectrafiles/ross/archive_20392.asd', local_path = tmpFile, dtoken = token  )
     
@@ -508,11 +519,6 @@ print(tmpFile)
       }
          
       updateF7Tabs(session, id = "tabsAll", selected = "Spectra Results")
-    
-      
-      
-        
-      
     })
     
     
