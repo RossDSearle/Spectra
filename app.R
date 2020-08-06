@@ -34,7 +34,7 @@ spectraServer <- 'http://esoil.io/APIDev'
 
 
 token <- readRDS("droptoken.rds")
-#print(drop_acc(dtoken = token))
+
 fls <- drop_dir(dropBoxPath, dtoken = token)  %>% data.frame()
 spectraFiles <- fls$name
 
@@ -117,16 +117,58 @@ shiny::shinyApp(
       ),
 
 
+
+
+
+
+
 ##################################  UI - Submit Spectra  ##################################         
       
       f7Tabs(
         animated = T,
         id = "tabsAll",
         #swipeable = TRUE,
+        
+        
+        ##################################  UI - My Spectra   ##################################          
+        f7Tab(
+          tabName = "My Spectra",
+          icon = f7Icon("lock_fill"),
+          active = TRUE,
+          f7Float(  
+            f7Shadow(
+              intensity = 10,
+              hover = TRUE,
+              tags$div( style=paste0("width: ", defWidth, 'px'),
+                        
+                        f7Card(
+                          
+                          title = 'Choose a spectra to display from the map above of the list below',
+                          fluidRow(leafletOutput("wgtMySpectraMap", height = defWidth-50, width = defWidth-30)),
+                        ))), side = "left"), 
+          
+          f7Float(  
+            f7Shadow(
+              intensity = 10,
+              hover = TRUE,
+              
+              tags$div( style=paste0("width: ", defWidth),           
+                        f7Card(
+                          title ='Spectra Metadata',
+                          fluidRow(htmlOutput("wgtSpecInfoTxt")),
+                          fluidRow(HTML('<BR>')),
+                          fluidRow(f7Button(inputId = 'wgtButgetSpectraInfo', label = 'Get Spectra Data', src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T))
+                          
+                          
+                        )
+                        
+              ))), side = "left"),
+        
+        
         f7Tab(
           tabName = "Submit",
           icon = f7Icon("cloud_upload"),
-          active = TRUE,
+          active = F,
 
           f7Float( f7Shadow(
             intensity = 24,
@@ -136,7 +178,7 @@ shiny::shinyApp(
                         id = 'crdMap',
                         
                         fluidRow(f7Select(inputId = 'wgtselectSpectra', label = 'Choose a spectra file to upload',choices= spectraFiles)),
-                        fluidRow(leafletOutput("wgtlocationMap", height = defWidth-50, width = defWidth-30)),
+                        fluidRow(leafletOutput("wgtlocationMap", height = defWidth-100, width = defWidth-30)),
                         fluidRow( tags$div( style=paste0("width: 150px"),f7Text(inputId = 'wgtLonVal', label = 'Longitude')),
                                   tags$div( style=paste0("width: 150px"),f7Text(inputId = 'wgtLatVal', label = 'Latitude'))
                         ),
@@ -157,49 +199,6 @@ shiny::shinyApp(
           
           
         ),
-        
-        
-        ##################################  UI - My Spectra   ##################################          
-        f7Tab(
-          tabName = "My Spectra",
-          icon = f7Icon("lock_fill"),
-          active = FALSE,
-          f7Float(  
-            f7Shadow(
-              intensity = 10,
-              hover = TRUE,
-              
-              
-              
-              tags$div( style=paste0("width: ", defWidth, 'px'),
-                        
-                        f7Card(
-                          
-                          title = 'Choose a spectra to display from the map above of the list below',
-                          fluidRow(leafletOutput("wgtMySpectraMap", height = defWidth-50, width = defWidth-30)),
-                          
-                         # fluidRow( f7Picker(inputId = 'wgtMySpectraIDs', label='Choose a spectra to display from the map above of the list below',  choices = c('') )),
-                        #  f7SmartSelect( inputId = 'wgtMySpectraSS' ,  label='Choose a spectra to display',  choices = c(''))
-                         # f7DatePicker( inputId = 'wgtStartDate', label='Start Date')
-                          
-                        ))), side = "left"), 
-          
-          f7Float(  
-            f7Shadow(
-              intensity = 10,
-              hover = TRUE,
-              
-              tags$div( style=paste0("width: ", defWidth),           
-                        f7Card(
-                          
-                          fluidRow(htmlOutput("wgtSpecInfoTxt")),
-                          fluidRow(HTML('<BR>')),
-                           fluidRow(f7Button(inputId = 'wgtButgetSpectraInfo', label = 'Get Spectra Data', src = NULL, color = 'green', fill = TRUE, outline = F, shadow = T, rounded = T))
-                                   
-                          
-                        )
-                        
-              ))), side = "left"),
         
         
 ################################## UI - Spectra RESULTS   ##################################           
@@ -256,7 +255,7 @@ shiny::shinyApp(
         
             
             
-##################################  UI - SOIL DATA MAP   ##################################             
+##################################  UI - Preferences  ##################################             
         
         f7Tab(
           tabName = "Preferences",
@@ -268,13 +267,12 @@ shiny::shinyApp(
             hover = TRUE,
             tags$div( style=paste0("width: ", defWidth),  
             f7Card(
-              title = NULL,
-              fluidRow( f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),  f7Select('SoilDepthList', "Select depth (cm)", choices=c('d1', 'd2', 'd3', 'd4'))),
-              #f7Select('SoilPropList', "Select soil attribute", choices=c('clay', 'ecec', 'phc', 'soc')),
-              HTML('<BR>'),
-              leafletOutput("soilMap", height = 400),
-              rHandsontableOutput('soilDataTable' )
-              #tableOutput('soilDataTable' )
+              title = 'These preferences are indicitive only and are not actually implemented as yet',
+              fluidRow( f7Text(inputId = 'wgtPrefUser', label = 'User Name', value = 'DemoUser') ),
+              fluidRow( f7Text(inputId = 'wgtPrefStartLocation', label = 'Start Location', value = '141.5368 141.5368') ),
+              fluidRow( f7Text(inputId = 'wgtPrefDropBoxLoc', label = 'DropBox Location', value = 'SpectraFiles/Ross') ),
+              
+ 
             )
             )
           )
@@ -305,7 +303,7 @@ shiny::shinyApp(
     
     observeEvent(input$wgtButgetSpectraInfo, {
       
-      req(input$RV$currentSelectedSpectraID)
+      #req(input$RV$currentSelectedSpectraID)
 
         url <- paste0('http://esoil.io/APIDev/SoilSpectra/querySpectra?spectraID=',RV$currentSelectedSpectraID)
         response <-  GET(paste0(url))
@@ -322,16 +320,18 @@ shiny::shinyApp(
     rec <- RV$AvailSepctra[RV$AvailSepctra$SpectraID == RV$currentSelectedSpectraID, ]
     asrisID <- paste0(rec$agency_code, '_', rec$proj_code, '_',rec$s_id, '_',rec$o_id, '_',rec$h_no, '_',rec$samp_no)
     HTML(paste0('
-    <H3>Metadata For ', rec$SpectraID, ' </H3>
-    <table><tr><td><b>ASRIS ID : </b></td><td>',asrisID  ,'</td></tr></table>
-    <table><tr><td><b>ASpecta Type : </b></td><td>',rec$Type  ,'</td></tr></table>
-     <table><tr><td><b>AUser Name : </b></td><td>',rec$Username  ,'</td></tr></table>
-      <table><tr><td><b>ATime Submitted Type : </b></td><td>',rec$SubmitTime  ,'</td></tr></table>
-       <table><tr><td><b>ASpecta Latitude : </b></td><td>',rec$Lattitude  ,'</td></tr></table>
-        <table><tr><td><b>ASpecta Longitude : </b></td><td>',rec$Longitude  ,'</td></tr></table>
-         <table><tr><td><b>ASpecta Upper Depth : </b></td><td>',rec$UpperDepth  ,'</td></tr></table>
-          <table><tr><td><b>ASpecta LowerDepth : </b></td><td>',rec$LowerDepth  ,'</td></tr></table>
-           <table><tr><td><b>ASpecta Origina lName : </b></td><td>',rec$OriginalName  ,'</td></tr></table>
+   
+    <table>
+    <tr><td><b>Spectra ID : </b></td><td>',rec$SpectraID  ,'</td></tr>
+    <tr><td><b>ASRIS ID : </b></td><td>',asrisID  ,'</td></tr>
+    <tr><td><b>ASpecta Type : </b></td><td>',rec$Type  ,'</td></tr>
+     <tr><td><b>AUser Name : </b></td><td>',rec$Username  ,'</td></tr>
+      <tr><td><b>ATime Submitted Type : </b></td><td>',rec$SubmitTime  ,'</td></tr>
+       <tr><td><b>ASpecta Latitude : </b></td><td>',rec$Lattitude  ,'</td></tr>
+        <tr><td><b>ASpecta Longitude : </b></td><td>',rec$Longitude  ,'</td></tr>
+         <tr><td><b>ASpecta Upper Depth : </b></td><td>',rec$UpperDepth  ,'</td>
+          <tr><td><b>ASpecta LowerDepth : </b></td><td>',rec$LowerDepth  ,'</td></tr>
+           <tr><td><b>ASpecta Origina lName : </b></td><td>',rec$OriginalName  ,'</td></tr></table>
     ')) })
     
     observe({
